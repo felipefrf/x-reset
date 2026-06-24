@@ -1,0 +1,24 @@
+{
+  "name": "x-reset",
+  "version": "1.0.0",
+  "description": "Delete your old tweets and replies from X/Twitter using your archive",
+  "main": "index.js",
+  "scripts": {
+    "start": "ts-node src/main.ts",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["twitter", "x", "delete", "tweets", "archive", "playwright"],
+  "author": "Felipe Fróes <felipefrf@gmail.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/felipefrf/x-reset.git"
+  },
+  "type": "commonjs",
+  "dependencies": {
+    "@types/node": "^26.0.0",
+    "playwright": "^1.61.1",
+    "ts-node": "^10.9.2",
+    "typescript": "^6.0.3"
+  }
+}
