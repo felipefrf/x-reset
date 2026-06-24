@@ -70,10 +70,16 @@ export class Deleter {
         await this.waitForLogin();
       }
 
-      await this.page.goto("https://x.com/home", {
-        waitUntil: "domcontentloaded",
-      });
-      await sleep(3000);
+      for (let attempt = 0; attempt < 3; attempt++) {
+        await this.page.goto("https://x.com/home", {
+          waitUntil: "domcontentloaded",
+        });
+        await sleep(3000);
+        if (await this.isLoggedIn()) break;
+        if (attempt < 2) {
+          this.log(`Login verification attempt ${attempt + 1} failed, retrying...`);
+        }
+      }
 
       if (!(await this.isLoggedIn())) {
         throw new Error("Login verification failed after redirect.");
@@ -153,10 +159,10 @@ export class Deleter {
 
     try {
       await this.page.goto(url, {
-        waitUntil: "domcontentloaded",
+        waitUntil: "networkidle",
         timeout: 30_000,
       });
-      await sleep(2000);
+      await sleep(3000);
 
       if (await this.isOnLoginPage()) {
         this.log("  Redirected to login — session expired.");
@@ -172,6 +178,7 @@ export class Deleter {
         'text="Hmm...this page doesn\'t exist"',
         'text="This Tweet was deleted"',
         'text="This Post was deleted"',
+        'text="This Tweet is unavailable"',
       ];
       let alreadyGone = false;
       for (const sel of deletedTexts) {
@@ -186,8 +193,11 @@ export class Deleter {
       const tweetArticle = this.page.locator(tweetSelector).first();
 
       if (!(await tweetArticle.isVisible({ timeout: 5000 }).catch(() => false))) {
-        this.log("  Tweet article not found.");
-        return "already_gone";
+        await sleep(3000);
+        if (!(await tweetArticle.isVisible({ timeout: 5000 }).catch(() => false))) {
+          this.log("  Tweet article not found after retry.");
+          return "already_gone";
+        }
       }
 
       const caretBtn = tweetArticle.locator('[data-testid="caret"]');
@@ -257,14 +267,19 @@ export class Deleter {
     await sleep(minutes * 60_000);
   }
 
-  private async ensureLoggedIn(): Promise<void> {
-    if (!this.page) return;
+  private async ensureLoggedIn(): Promise<boolean> {
+    if (!this.page) return false;
     await sleep(2000);
 
-    if (await this.isLoggedIn()) return;
+    if (await this.isLoggedIn()) return true;
 
     this.log("Session expired. Please log in again.");
-    await this.waitForLogin();
+    try {
+      await this.waitForLogin();
+    } catch {
+      this.log("Could not re-login. Run 'npm start' again after logging in.");
+      return false;
+    }
 
     await this.page.goto("https://x.com/home", {
       waitUntil: "domcontentloaded",
@@ -272,9 +287,11 @@ export class Deleter {
     await sleep(3000);
 
     if (!(await this.isLoggedIn())) {
-      throw new Error("Login verification failed after re-login.");
+      this.log("Login verification failed after re-login.");
+      return false;
     }
     this.log("Re-login confirmed.");
+    return true;
   }
 
   async runQueue(
@@ -298,7 +315,11 @@ export class Deleter {
       }
 
       if (!(await this.isLoggedIn())) {
-        await this.ensureLoggedIn();
+        const reLogged = await this.ensureLoggedIn();
+        if (!reLogged) {
+          this.log("Stopping — login required. Progress has been saved.");
+          break;
+        }
       }
 
       const url = `https://x.com/${this.config.username}/status/${id}`;
@@ -330,7 +351,11 @@ export class Deleter {
           this.consecutiveErrors++;
           errors++;
           if (await this.isOnLoginPage()) {
-            await this.ensureLoggedIn();
+            const reLogged = await this.ensureLoggedIn();
+            if (!reLogged) {
+              this.log("Stopping — login required. Progress has been saved.");
+              return { deleted, errors };
+            }
           }
           break;
       }

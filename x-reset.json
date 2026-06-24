@@ -1,10 +1,10 @@
 {
   "username": "felipefrf",
   "archiveDir": "./archive",
-  "minDelayMs": 10000,
-  "maxDelayMs": 15000,
+  "minDelayMs": 2000,
+  "maxDelayMs": 2000,
   "cooldownAfter": 25,
-  "cooldownMs": 150000,
+  "cooldownMs": 120000,
   "maxDeletions": 0,
   "headed": true,
   "deleteRetweets": true,

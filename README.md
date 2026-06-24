@@ -1,136 +1,94 @@
 # x-reset
 
-Bulk-delete your old tweets and replies from X/Twitter using your official [Twitter archive](https://x.com/settings/download_your_data).
+Bulk-delete your old tweets, retweets, and replies from X/Twitter using your official [Twitter archive](https://x.com/settings/download_your_data).
 
-The tool opens a real Chrome browser (via Playwright) and deletes tweets one by one, with random delays between actions to reduce the chance of getting rate-limited or flagged.
-
----
-
-## Prerequisites
-
-You need **Node.js** installed on your computer (version 18 or newer).
-
-| OS | How to install |
-|---|---|
-| **Windows** | Download from [nodejs.org](https://nodejs.org) — get the **LTS** version. Run the installer. |
-| **macOS** | Download from [nodejs.org](https://nodejs.org) — or if you have Homebrew: `brew install node` |
-| **Linux** | Use your package manager. Example: `sudo apt install nodejs npm` (Ubuntu/Debian). |
-
-To verify it worked, open a terminal and run:
-
-```bash
-node --version   # should show v18.x or higher
-npm --version    # should show 9.x or higher
-```
-
-> **Don't know how to open a terminal?**
->
-> Windows: Press `Win + R`, type `cmd`, press Enter.
-> macOS: Press `Cmd + Space`, type `Terminal`, press Enter.
-> Linux: Usually `Ctrl + Alt + T`.
+Uses Playwright to drive a real Chrome browser — deletes tweets one by one with configurable delays and cooldowns. Resumable: progress is saved after every deletion.
 
 ---
 
-## Quick start (3 steps)
+## Quick start
 
-### 1. Download this project
-
-Click the green **Code** button at the top of this page → **Download ZIP**. Extract the ZIP to any folder on your computer.
-
-### 2. Get your Twitter/X archive
+### 1. Download your Twitter/X archive
 
 - Go to [x.com/settings/download_your_data](https://x.com/settings/download_your_data)
-- Request your archive (it may take 24–48 hours for X to prepare it)
-- Once ready, download the ZIP and extract the **entire contents** into the `archive/` folder inside the project
+- Request your archive (may take 24–48h for X to prepare it)
+- Download the ZIP and extract everything into the `archive/` folder
 
-> The `archive/` folder should contain a `data/` subfolder with `tweets.js` (or `tweets-part*.js` files) inside.
-
-### 3. Configure and run
-
-Open the project folder in a terminal and run:
+### 2. Install & configure
 
 ```bash
-npm install        # installs dependencies (only needed once)
-npm start          # starts the tool
+npm install
 ```
 
-**Edit `x-reset.json` first** — at minimum, change `username` to your own X handle (without the `@`).
+Edit `x-reset.json` — change `username` to your own handle (without `@`).
 
-A Chrome window will open. Log in to your X account, and the tool starts deleting. Press `Ctrl + C` to stop at any time — your progress is saved and you can resume later.
+### 3. Run
+
+```bash
+npm start
+```
+
+A Chrome window opens. Log in to X manually (one-time). The tool then deletes tweets automatically. Press `Ctrl+C` to stop — progress is saved.
 
 ---
 
 ## Configuration: `x-reset.json`
 
-This file controls what gets deleted and how fast. Open it with any text editor (Notepad, VS Code, etc.).
-
-### Required
-
-| Key | Example | What it does |
-|---|---|---|
-| `username` | `"yourhandle"` | Your X/Twitter username **without the @**. This is the only setting you **must** change. |
-
 ### What to delete
 
-| Key | Default | What it does | When to change it |
-|---|---|---|---|
-| `deleteTweets` | `true` | Delete your **regular tweets** (original posts). | Set to `false` if you only want to clean retweets/replies. |
-| `deleteRetweets` | `false` | Delete your **retweets**. | Set to `true` if you also want to clean retweets. |
-| `deleteReplies` | `false` | Delete your **replies** to other people. | Set to `true` if you also want to clean replies. |
-| `minAgeDays` | `30` | Only delete tweets **older than** this many days. | Increase to be more conservative (e.g. `365` for 1 year). Set to `0` to delete everything regardless of age. |
-
-> **Example:** To delete everything (tweets, retweets, replies, any age):
-> ```json
-> "deleteTweets": true,
-> "deleteRetweets": true,
-> "deleteReplies": true,
-> "minAgeDays": 0
-> ```
-
-### Speed & safety
-
-These control the pace of deletions. Higher values are **safer** (less likely to trigger rate limits), but slower.
-
-| Key | Default | What it does | Impact |
-|---|---|---|---|
-| `minDelayMs` | `5000` | Minimum pause between each deletion. | 5000 = 5 seconds. Lower = faster but riskier. Don't go below 3000. |
-| `maxDelayMs` | `15000` | Maximum pause between each deletion. | The tool picks a random delay between min and max each time. 15000 = 15 seconds. |
-| `cooldownAfter` | `15` | How many deletions before taking a longer break. | After 15 deletions, a cooldown kicks in. Lower = more breaks = safer. |
-| `cooldownMs` | `300000` | Cooldown duration in milliseconds. | 300000 = 5 minutes. This is the longer rest between deletion batches. |
-| `maxDeletions` | `100` | Stop after this many deletions per run. `0` = no limit. | Useful to limit damage. Run the tool again to continue where you left off. |
-| `headed` | `true` | Show the browser window. | `true` = you can see what's happening. `false` = runs hidden in the background. |
-
-> **Safe profile** (slow, unlikely to get limited):
-> ```json
-> "minDelayMs": 10000,
-> "maxDelayMs": 20000,
-> "cooldownAfter": 10,
-> "cooldownMs": 600000
-> ```
-
-> **Aggressive profile** (fast, higher risk):
-> ```json
-> "minDelayMs": 4000,
-> "maxDelayMs": 8000,
-> "cooldownAfter": 25,
-> "cooldownMs": 120000
-> ```
-
-### Advanced
-
-| Key | Default | What it does |
+| Key | Default | Description |
 |---|---|---|
-| `archiveDir` | `"./archive"` | Where your extracted Twitter archive is located. |
-| `stateFile` | `"./state.json"` | Where progress is saved. Don't change unless you need to. |
-| `sessionFile` | `"./session.json"` | Where the browser session is stored. Don't change unless you need to. |
+| `username` | `"felipefrf"` | Your X handle without `@` |
+| `deleteTweets` | `true` | Delete your regular tweets |
+| `deleteRetweets` | `true` | Delete your retweets |
+| `deleteReplies` | `true` | Delete your replies |
+| `minAgeDays` | `30` | Only delete tweets older than N days. `0` = all ages |
+
+### Speed & timing
+
+| Key | Default | Description |
+|---|---|---|
+| `minDelayMs` | `2000` | Minimum wait between deletions (ms) |
+| `maxDelayMs` | `2000` | Maximum wait between deletions (ms) |
+| `cooldownAfter` | `25` | Deletions before a cooldown break |
+| `cooldownMs` | `120000` | Cooldown duration in ms (120s = 2 min) |
+| `maxDeletions` | `0` | Stop after N deletions. `0` = unlimited |
+| `headed` | `true` | Show browser window (`false` = headless) |
+
+> **Proven safe profile** (used to delete 1,429 tweets with zero rate-limit issues):
+> Delays 2s, 2-minute cooldown every 25 deletions.
+>
+> **Aggressive (test at your own risk):**
+> ```json
+> "minDelayMs": 0,
+> "maxDelayMs": 0,
+> "cooldownAfter": 25,
+> "cooldownMs": 60000
+> ```
 
 ---
 
-## Resuming & resetting
+## How it works
 
-- **Progress is saved** to `state.json` after every deletion. If you stop the tool (or it crashes), just run `npm start` again — it picks up where it left off.
-- **To start fresh**, delete `state.json` and `session.json`. Optionally delete `browser-profile/` to clear the cached login.
-- Already-deleted tweets (that don't exist anymore) are skipped automatically and counted as successful.
+1. Parses `archive/data/tweets.js` (and `tweets-part*.js`) to extract all tweet IDs
+2. Filters by age, type (tweet/RT/reply) per your config
+3. Skips IDs already processed (stored in `state.json`)
+4. Opens each tweet URL, clicks `...` > `Delete` > confirm
+5. Saves progress after each successful deletion
+
+### Rate limiting & safety
+
+- If X shows a rate-limit page, the tool backs off for 2–8 minutes and continues
+- Rate-limited tweets are **not** marked as deleted — they retry on next run
+- Deleted/missing tweets are detected and skipped automatically
+- Session expiry triggers a re-login prompt (or graceful stop if unattended)
+- Ctrl+C saves progress and closes cleanly
+
+### State & resuming
+
+- `state.json` — tracks which IDs have been deleted. Safe to delete to start fresh
+- `browser-profile/` — persistent browser profile (cookies, localStorage). Delete if login gets stuck
+- Run `npm start` anytime — it picks up where it left off
 
 ---
 
@@ -138,14 +96,11 @@ These control the pace of deletions. Higher values are **safer** (less likely to
 
 | Problem | Solution |
 |---|---|
-| "archive directory not found" | Make sure you extracted the Twitter ZIP into `archive/` and it has a `data/` folder inside. |
-| Browser opens but nothing happens | Check that you're logged in. If the tool says "Not logged in", log in manually in the browser window and wait — it detects your login and continues. |
-| "Rate limit" or "Too many requests" | The tool will back off automatically for a few minutes and resume. Lower your `minDelayMs`/`maxDelayMs` and reduce `cooldownAfter` in `x-reset.json`. |
-| "Session expired" | Your login cookie expired. Delete `browser-profile/` and `session.json`, then run `npm start` again. |
-| Stuck or frozen | Press `Ctrl + C` to stop, then run `npm start` again. Progress is saved. |
-| `npm` not recognized | Node.js is not installed or not in your PATH. Reinstall from [nodejs.org](https://nodejs.org). |
-
----
+| Can't log in (Google/security blocks) | The tool uses a persistent Chrome profile. If X flags it, delete `browser-profile/` and try again |
+| "Session expired" during run | If you're at the computer, just log in again in the browser window. If unattended, the tool stops gracefully and saves progress |
+| "Tweet article not found" | The tweet may already be deleted or X didn't render the page in time. These are skipped and counted as deleted |
+| Rate limited mid-run | The tool detects the rate-limit page and backs off automatically for several minutes |
+| `npm start` crashes on login | Delete `browser-profile/` and `state.json`, then run `npm start` again |
 
 ## License
 

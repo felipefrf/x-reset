@@ -29,11 +29,11 @@ export const DEFAULT_CONFIG: Config = {
   stateFile: path.resolve("./state.json"),
   sessionFile: path.resolve("./session.json"),
 
-  minDelayMs: 5_000,
-  maxDelayMs: 15_000,
-  cooldownAfter: 15,
-  cooldownMs: 300_000,
-  maxDeletions: 100,
+  minDelayMs: 2_000,
+  maxDelayMs: 2_000,
+  cooldownAfter: 25,
+  cooldownMs: 120_000,
+  maxDeletions: 0,
 
   headed: true,
 

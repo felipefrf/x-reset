@@ -138,7 +138,13 @@ async function main() {
   }
 }
 
-main().catch((err) => {
-  console.error("Fatal error:", err);
+main().catch(async (err) => {
+  console.error("Fatal error:", err instanceof Error ? err.message : err);
+  try {
+    const config = loadConfig();
+    const state = loadState(config.stateFile);
+    saveState(config.stateFile, state);
+    console.log(`State saved to ${config.stateFile} before exit.`);
+  } catch {}
   process.exit(1);
 });
